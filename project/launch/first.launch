@@ -1,6 +1,0 @@
-<launch>
-<include file="$(find project)/launch/map.launch" />
-<node name="graph_search" pkg="project" type="first.py" output="screen" />
-<node name="points" pkg="project" type="points.py" output="screen" />
-<node name="rviz" pkg="rviz" type="rviz" />
-</launch>
