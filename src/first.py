@@ -10,7 +10,7 @@ np.random.seed(444)
 class RRT(GridMap):
     def __init__(self):
         super(RRT, self).__init__()
-        self.step = 0.9
+        self.step = 0.5
         self.points = []
         self.v = 0.8
         self.L = 0.1
@@ -24,6 +24,7 @@ class RRT(GridMap):
         path.append(akt)
         while not start:
             p = akt
+            print(p)
             akt = self.parent[p]
             path.append(akt)
             if akt == self.st:
@@ -76,7 +77,7 @@ class RRT(GridMap):
     def find_closest(self, pos):
         p = False
         closest = []
-        for point in self.parent:
+        for point in self.points:
             dist = sqrt(pow(pos[0] - point[0], 2) + pow(pos[1] - point[1], 2))
             if p == False:
                 closest = point
@@ -86,20 +87,20 @@ class RRT(GridMap):
                 if dist < min:
                     closest = point
                     min = dist
+        print(closest)
         return closest
 
     def find_path(self, point, best):
-        pth = False
-        po = {}
         found = False
         for p in range(70):
             points = []
+            po = {}
             kier = float(np.random.randint(low=-40000, high=40000))
             kier = kier/1000
             t = float(np.random.randint(low=100, high=700))
             dt = t/1000
             prev = best
-            for i in range(10):
+            for i in range(20):
                 x = round(prev[0] + self.v*cos(prev[2]) * dt, 3)
                 y = round(prev[1] + self.v*sin(prev[2]) * dt, 3)
                 o = round(prev[2] + self.v/self.L * tan(kier), 3)
@@ -107,12 +108,15 @@ class RRT(GridMap):
                     po[(x, y, o)] = prev
                     prev = (x, y, o)
                     points.append(prev)
-                    if sqrt(pow(x - point[0], 2) + pow(y - point[1], 2)) < 0.09:
-                        print("Found")
-                        point = (point[0], point[1], o)
+                    if sqrt(pow(x - point[0], 2) + pow(y - point[1], 2)) < 0.05:
+                        if point == self.en:
+                            self.en = (point[0], point[1], o)
+                            print(self.en, " ", best)
+                            point = self.en
+                        else:
+                            point = (point[0], point[1], o)
                         self.parent[point] = (x, y, o)
                         while not found:
-                            #print(prev)
                             par = po[prev]
                             self.parent[prev] = par
                             prev = par
@@ -120,11 +124,10 @@ class RRT(GridMap):
                                 found = True
                         for p in points:
                             self.points.append(p)
-                        pth = True
-                        return True
+                        return point
                 else:
                     break
-        return False
+        return None
 
     def new_pt(self, pt, closest):
         dist = sqrt(pow(pt[0]- closest[0], 2) + pow(pt[1] - closest[1], 2))
@@ -155,6 +158,7 @@ class RRT(GridMap):
         while not rp.is_shutdown():
             rig = False
             new = (0, 0, 0)
+            pt = None
             while rig != True:
                 point = self.random_point()
                 cl = self.find_closest(point)
@@ -164,19 +168,21 @@ class RRT(GridMap):
                     #print(new)
 
 
-            best = self.restoreDist(new)
-            if(self.find_path(new, best)):
+            pt = self.find_path(new, cl)
+            if(pt  != None):
                 self.publish_search()
+                if sqrt(pow(pt[0] - self.en[0], 2) + pow(pt[1] - self.en[1], 2)) <= self.step:
+                     while not self.find_path(self.en, pt):
+                         cos = True
+                     print("Goal!")
+                     path = self.restorePath()
+                     self.publish_path(path)
+                     self.publish_search()
+                     break
             else:
                 continue
 
-            # if self.check_if_valid(new, self.en):
-            #     self.parent[self.en] = new
-            #     print("Goal!")
-            #     path = self.restorePath()
-            #     self.publish_path(path)
-            #     self.publish_search()
-            #     break
+
             rp.sleep(0.01)
 
 
