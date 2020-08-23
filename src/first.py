@@ -5,15 +5,15 @@ import numpy as np
 from math import *
 
 np.random.seed(444)
-#for i in range()
+
 
 class RRT(GridMap):
     def __init__(self):
         super(RRT, self).__init__()
         self.step = 0.5
         self.points = []
-        self.v = 0.8
-        self.L = 0.1
+        self.v = 0.2
+        self.L = 0.2
         self.st = (self.start[0], self.start[1], 180)
         self.en = (self.end[0], self.end[1], 0)
 
@@ -92,15 +92,15 @@ class RRT(GridMap):
 
     def find_path(self, point, best):
         found = False
-        for p in range(70):
+        for p in range(50):
             points = []
             po = {}
-            kier = float(np.random.randint(low=-40000, high=40000))
+            kier = float(np.random.randint(low=-30000, high=30000)) # turn angle
             kier = kier/1000
-            t = float(np.random.randint(low=100, high=700))
+            t = float(np.random.randint(low=10, high=700)) # time to reach next point
             dt = t/1000
             prev = best
-            for i in range(20):
+            for i in range(50):
                 x = round(prev[0] + self.v*cos(prev[2]) * dt, 3)
                 y = round(prev[1] + self.v*sin(prev[2]) * dt, 3)
                 o = round(prev[2] + self.v/self.L * tan(kier), 3)
@@ -108,7 +108,7 @@ class RRT(GridMap):
                     po[(x, y, o)] = prev
                     prev = (x, y, o)
                     points.append(prev)
-                    if sqrt(pow(x - point[0], 2) + pow(y - point[1], 2)) < 0.05:
+                    if sqrt(pow(x - point[0], 2) + pow(y - point[1], 2)) < 0.09:
                         if point == self.en:
                             self.en = (point[0], point[1], o)
                             print(self.en, " ", best)
@@ -167,8 +167,8 @@ class RRT(GridMap):
                     rig = True
                     #print(new)
 
-
-            pt = self.find_path(new, cl)
+            bst = self.restoreDist(new)
+            pt = self.find_path(new, bst)
             if(pt  != None):
                 self.publish_search()
                 if sqrt(pow(pt[0] - self.en[0], 2) + pow(pt[1] - self.en[1], 2)) <= self.step:
